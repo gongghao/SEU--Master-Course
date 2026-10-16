@@ -1,0 +1,88 @@
+[
+  {
+    "id": "MS000151",
+    "title": "学位英语",
+    "category": "公共必修课",
+    "credits": 4,
+    "semester": "2026–2027 秋季",
+    "description": "积累语言基础，把阅读、写作与表达串联起来。",
+    "symbol": "Aa",
+    "color": "sand",
+    "topics": [
+      {"id": "vocabulary", "title": "梳理课程词汇与常用表达"},
+      {"id": "reading", "title": "整理阅读材料与长难句"},
+      {"id": "writing", "title": "练习学术写作与段落组织"},
+      {"id": "practice", "title": "回顾课堂练习与易错点"}
+    ],
+    "resources": []
+  },
+  {
+    "id": "DB009141",
+    "title": "人工智能算法设计的形式化思维与方法",
+    "category": "专业必修课",
+    "credits": 3,
+    "semester": "2026–2027 秋季",
+    "description": "从问题描述出发，建立严谨的建模与推理习惯。",
+    "symbol": "∀",
+    "color": "lavender",
+    "topics": [
+      {"id": "concepts", "title": "整理形式化表达与逻辑基础"},
+      {"id": "models", "title": "梳理课堂中的问题建模方法"},
+      {"id": "proofs", "title": "回顾算法正确性与证明思路"},
+      {"id": "examples", "title": "重做课程案例与习题"}
+    ],
+    "resources": []
+  },
+  {
+    "id": "MS009101",
+    "title": "算法设计与分析",
+    "category": "专业必修课",
+    "credits": 3,
+    "semester": "2026–2027 秋季",
+    "description": "理解设计范式，在推导与练习中掌握算法。",
+    "symbol": "O(n)",
+    "color": "mint",
+    "topics": [
+      {"id": "complexity", "title": "复杂度分析与递推关系"},
+      {"id": "divide", "title": "分治策略与典型问题"},
+      {"id": "dynamic", "title": "动态规划：状态、转移与边界"},
+      {"id": "greedy", "title": "贪心策略与正确性证明"},
+      {"id": "graphs", "title": "图算法与课程习题复盘"}
+    ],
+    "resources": []
+  },
+  {
+    "id": "MS009114",
+    "title": "计算机网络体系结构",
+    "category": "专业必修课",
+    "credits": 2,
+    "semester": "2026–2027 秋季",
+    "description": "连接分层模型、协议机制与网络设计思路。",
+    "symbol": "⌘",
+    "color": "blue",
+    "topics": [
+      {"id": "architecture", "title": "网络分层与体系结构"},
+      {"id": "routing", "title": "网络层与路由机制"},
+      {"id": "transport", "title": "传输协议与拥塞控制"},
+      {"id": "review", "title": "整理课程专题与协议对比"}
+    ],
+    "resources": []
+  },
+  {
+    "id": "MS009147",
+    "title": "人工智能",
+    "category": "专业必修课",
+    "credits": 2,
+    "semester": "2026–2027 秋季",
+    "description": "梳理智能方法的基本原理与适用场景。",
+    "symbol": "✳",
+    "color": "rose",
+    "topics": [
+      {"id": "search", "title": "搜索策略与问题求解"},
+      {"id": "reasoning", "title": "知识表示与推理"},
+      {"id": "learning", "title": "机器学习基本概念与方法"},
+      {"id": "review", "title": "课程例题与方法对比总结"}
+    ],
+    "resources": []
+  }
+]

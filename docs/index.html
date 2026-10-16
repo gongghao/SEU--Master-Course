@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#164f46">
+  <meta name="description" content="东南大学研究生课程复习空间：按课程整理知识、记录笔记、管理复习进度。">
+  <title>知序 · SEU 课程复习空间</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./assets/style.css">
+  <script type="module" src="./assets/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳转到主要内容</a>
+  <aside class="sidebar">
+    <a class="brand" href="#"><span class="brand-mark">知</span><span>知序<span class="brand-en">SEU STUDY SPACE</span></span></a>
+    <div class="workspace-label">我的学习空间 <span>个人</span></div>
+    <nav aria-label="主导航">
+      <button class="nav-item active" data-view="all"><span aria-hidden="true">▦</span>课程总览<span class="nav-count" id="all-count">5</span></button>
+      <button class="nav-item" data-view="favorites"><span aria-hidden="true">☆</span>我的收藏<span class="nav-count" id="favorite-count">0</span></button>
+      <div class="nav-label">课程分类</div>
+      <button class="nav-item" data-view="公共必修课"><span class="dot sand"></span>公共必修课<span class="nav-count" id="public-count">1</span></button>
+      <button class="nav-item" data-view="专业必修课"><span class="dot mint"></span>专业必修课<span class="nav-count" id="major-count">4</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="quiet-card"><span class="small-label">一点点积累，也算进步</span><p>把知识理清，<br>把复习交给日常。</p><span class="quiet-line"></span></div>
+      <button class="nav-item" id="backup-button"><span aria-hidden="true">⇅</span>数据与备份</button>
+      <a class="repo-link" href="https://github.com/gongghao/SEU--Master-Course" target="_blank" rel="noopener noreferrer">GitHub 仓库 <span aria-hidden="true">↗</span></a>
+      <div class="school">东南大学 · 计算机科学与工程学院</div>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb">学习空间 <span>/</span> <span id="breadcrumb-current">课程总览</span></div><span class="term">2026–2027 学年 · 秋季</span><span class="avatar" aria-hidden="true">SEU</span></header>
+    <main id="main" tabindex="-1"><div class="loading">正在整理你的课程…</div></main>
+    <footer>知序 · 让每一次复习，都有迹可循。<span>个人课程整理 · 非学校官方网站</span></footer>
+  </div>
+  <dialog id="course-dialog" aria-labelledby="course-dialog-title">
+    <form id="course-form">
+      <div class="dialog-heading"><div><span class="eyebrow">GROW YOUR LIBRARY</span><h2 id="course-dialog-title">添加一门新课程</h2></div><button type="button" class="icon-button" data-close="course-dialog" aria-label="关闭">×</button></div>
+      <p class="muted">为新知识留一个位置。课程先保存在当前浏览器，可通过备份导出。</p>
+      <label>课程名称<input name="title" required maxlength="100" placeholder="例如：高级数据库系统"></label>
+      <div class="form-row"><label>课程编号<input name="id" required maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="例如：MS009999"><small>字母、数字、下划线或短横线</small></label><label>课程类别<select name="category"><option>专业必修课</option><option>公共必修课</option></select></label></div>
+      <div class="form-row"><label>学分<input name="credits" type="number" min="0" max="30" step="0.5" value="2" required></label><label>学期<input name="semester" value="2026–2027 秋季" maxlength="60" required></label></div>
+      <label>课程简介<textarea name="description" rows="2" maxlength="300" placeholder="这门课，你希望掌握什么？"></textarea></label>
+      <label>复习清单<small>每行一项，也可以稍后添加</small><textarea name="topics" rows="4" maxlength="10000" placeholder="梳理课程大纲&#10;回顾课堂笔记&#10;完成习题复盘"></textarea></label>
+      <p class="form-error" id="course-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" class="button secondary" data-close="course-dialog">取消</button><button class="button primary" type="submit">添加课程 <span aria-hidden="true">＋</span></button></div>
+    </form>
+  </dialog>
+  <dialog id="backup-dialog" aria-labelledby="backup-title">
+    <div class="dialog-heading"><div><span class="eyebrow">YOUR STUDY, YOUR DATA</span><h2 id="backup-title">数据与备份</h2></div><button class="icon-button" data-close="backup-dialog" aria-label="关闭">×</button></div>
+    <p class="muted">进度、笔记、新增课程和资料链接保存在当前浏览器，不会自动同步到 GitHub 或其他设备。</p>
+    <div class="backup-option"><h3>完整备份</h3><p>包含全部个人学习记录。换设备或清理浏览器前，记得导出。</p><button class="button primary" id="export-backup">导出学习备份 ↓</button><label class="button secondary file-button">导入备份<input id="import-backup" type="file" accept="application/json,.json"></label></div>
+    <div class="backup-option"><h3>更新网站的课程目录</h3><p>导出包含新课程的课程配置，将文件替换到仓库的 <code>docs/data/courses.json</code>，提交后即可让所有设备看到新课程。个人笔记与进度不会包含在此配置中。</p><button class="button secondary" id="export-catalog">导出课程配置 ↓</button></div>
+    <p id="backup-error" class="form-error" role="alert"></p>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
