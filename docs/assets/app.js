@@ -1,3 +1,4 @@
+import { getReview, courseTabs, renderStudyGuide, renderSources, matchesSection, guideToMarkdown } from './review.js';
 import { STORAGE_KEY, emptyState, validateCourses, validateState, mergeCourses, courseRecord, progress, filterCourses, safeUrl } from './model.js';
 
 const $ = selector => document.querySelector(selector);
@@ -75,7 +76,7 @@ function renderHome() {
     <div class="filters" role="group" aria-label="筛选课程">${[['all','全部课程'],['公共必修课','公共必修课'],['专业必修课','专业必修课']].map(([v,t]) => `<button class="filter ${view === v ? 'active' : ''}" data-filter="${v}" aria-pressed="${view === v}">${t}</button>`).join('')}<span class="result-count" id="result-count"></span></div>
     <div class="course-grid" id="course-grid"></div></section>
     ${recent ? `<div class="recent"><span>继续上次的复习</span><a href="#course/${encodeURIComponent(recent.id)}">${escape(recent.title)} →</a></div>` : ''}
-    <p class="home-note"><span aria-hidden="true">ⓘ</span>课程信息来自 2026 年秋季选课表。预设清单为建议复习框架，具体范围请以教师要求为准。学习记录保存在本浏览器。</p>`;
+    <p class="home-note"><span aria-hidden="true">ⓘ</span>课程信息来自 2026 年秋季选课表。人工智能已按所提供的期末提纲整理；其他课程仍为建议框架。具体范围请以教师要求为准。学习记录保存在本浏览器。</p>`;
   $('#search').addEventListener('input', e => { query = e.target.value; renderCards(); });
   renderCards(); updateSidebar();
 }
@@ -86,7 +87,7 @@ function renderDetail(c) {
   $('#breadcrumb-current').textContent = c.title;
   const r = courseRecord(state, c.id), p = progress(c, r);
   $('#main').innerHTML = `<a href="#" class="back">← 返回课程总览</a><div class="detail-hero">${symbol(c)}<div><div class="course-code">${escape(c.id)}</div><h1>${escape(c.title)}</h1><div class="detail-meta"><span>${c.category}</span><span>${c.credits} 学分</span><span>${escape(c.semester)}</span></div></div>${star(c)}</div>
-    <div class="detail-layout"><section class="panel"><div class="tabs" role="tablist" aria-label="课程内容">${[['outline','复习清单'],['notes','我的笔记'],['resources','课程资料']].map(([key,title]) => `<button class="tab ${activeTab === key ? 'active' : ''}" id="tab-${key}" role="tab" aria-selected="${activeTab === key}" aria-controls="tab-content" tabindex="${activeTab === key ? 0 : -1}" data-tab="${key}">${title}</button>`).join('')}</div><div id="tab-content" role="tabpanel" aria-labelledby="tab-${activeTab}"></div></section>
+    <div class="detail-layout"><section class="panel"><div class="tabs" role="tablist" aria-label="课程内容">${courseTabs(c.id).map(([key,title]) => `<button class="tab ${activeTab === key ? 'active' : ''}" id="tab-${key}" role="tab" aria-selected="${activeTab === key}" aria-controls="tab-content" tabindex="${activeTab === key ? 0 : -1}" data-tab="${key}">${title}</button>`).join('')}</div><div id="tab-content" role="tabpanel" aria-labelledby="tab-${activeTab}"></div></section>
     <aside class="detail-aside"><section class="panel side-panel"><span class="aside-heading">每一小步，都算数</span><div class="progress-summary"><strong id="detail-percent">${p.percent}%</strong><span id="detail-done">已完成 ${p.done} / ${p.total} 项</span></div><div id="detail-progress">${bar(p)}</div><p>完成一项，就勾选一项。进度以复习清单为准，随你的学习慢慢累积。</p></section>
     <section class="panel side-panel"><h2>关于这门课</h2><p>${escape(c.description || '为这门课建立属于自己的知识体系。')}</p><ul class="course-facts"><li>课程类别<span>${c.category}</span></li><li>课程学分<span>${c.credits} 学分</span></li><li>开课学期<span>${escape(c.semester)}</span></li></ul></section></aside></div>`;
   renderTab(c); updateSidebar();
@@ -101,8 +102,33 @@ function refreshProgress(c) {
 
 function renderTab(c) {
   const r = courseRecord(state, c.id), target = $('#tab-content');
-  if (activeTab === 'outline') {
-    target.innerHTML = `<h2>把复习拆成可完成的小事</h2><p class="guidance">建议复习框架 · 预设条目根据课程名称整理，并非教师公布的考试大纲。请结合课件与课堂要求补充实际重点。</p><div id="tasks">${[...c.topics, ...r.tasks].map(t => `<div class="task ${r.done.includes(t.id) ? 'completed' : ''}"><input type="checkbox" id="task-${escape(t.id)}" data-task="${escape(t.id)}" ${r.done.includes(t.id) ? 'checked' : ''}><label for="task-${escape(t.id)}">${escape(t.title)}</label>${r.tasks.some(x => x.id === t.id) ? `<button class="delete-button" data-delete-task="${escape(t.id)}" aria-label="删除${escape(t.title)}">删除</button>` : ''}</div>`).join('') || '<p class="muted">还没有复习条目，先添加今天想完成的一件事。</p>'}</div><form class="inline-form" id="task-form"><input name="title" aria-label="新复习条目" required maxlength="300" placeholder="添加一个复习重点…"><button class="button secondary" type="submit">＋ 添加</button></form><p class="form-error" id="task-error" role="alert"></p>`;
+  if (activeTab === 'review' && getReview(c.id)) {
+    const guide = getReview(c.id);
+    target.innerHTML = renderStudyGuide(guide, r);
+    const filter = query => {
+      let count = 0;
+      for (const s of guide.sections) {
+        const show = matchesSection(s, query);
+        const element = document.getElementById(`section-${s.id}`);
+        element.hidden = !show;
+        document.querySelector(`[data-study-goto="${s.id}"]`).hidden = !show;
+        if (show) { count++; if (query.trim()) element.open = true; }
+      }
+      $('#study-results').textContent = count ? `共 ${count} 项 · 自测题先思考，再查看参考答案。` : '没有匹配的知识点，请尝试其他关键词。';
+    };
+    $('#study-search').addEventListener('input', e => filter(e.target.value));
+    target.querySelectorAll('[data-study-goto]').forEach(button => button.addEventListener('click', () => {
+      const section = document.getElementById(`section-${button.dataset.studyGoto}`);
+      section.open = true;
+      section.scrollIntoView({ block: 'start' });
+      section.querySelector('summary').focus({ preventScroll: true });
+    }));
+    target.querySelectorAll('[data-study-expand]').forEach(button => button.addEventListener('click', () => {
+      target.querySelectorAll('.review-section:not([hidden])').forEach(section => { section.open = button.dataset.studyExpand === 'true'; });
+    }));
+    $('#download-guide').addEventListener('click', () => download(guideToMarkdown(guide), `${c.id}-期末复习讲义.md`, 'text/markdown'));
+  } else if (activeTab === 'outline') {
+    target.innerHTML = `<h2>把复习拆成可完成的小事</h2><p class="guidance">${getReview(c.id) ? '已按《期末复习提纲》整理为 24 项，与“复习讲义”中的章节勾选同步。原有笔记和个人条目保留；旧版通用清单的勾选不自动代表新内容已掌握。' : '建议复习框架 · 预设条目根据课程名称整理，并非教师公布的考试大纲。请结合课件与课堂要求补充实际重点。'}</p><div id="tasks">${[...c.topics, ...r.tasks].map(t => `<div class="task ${r.done.includes(t.id) ? 'completed' : ''}"><input type="checkbox" id="task-${escape(t.id)}" data-task="${escape(t.id)}" ${r.done.includes(t.id) ? 'checked' : ''}><label for="task-${escape(t.id)}">${escape(t.title)}</label>${r.tasks.some(x => x.id === t.id) ? `<button class="delete-button" data-delete-task="${escape(t.id)}" aria-label="删除${escape(t.title)}">删除</button>` : ''}</div>`).join('') || '<p class="muted">还没有复习条目，先添加今天想完成的一件事。</p>'}</div><form class="inline-form" id="task-form"><input name="title" aria-label="新复习条目" required maxlength="300" placeholder="添加一个复习重点…"><button class="button secondary" type="submit">＋ 添加</button></form><p class="form-error" id="task-error" role="alert"></p>`;
     $('#task-form').addEventListener('submit', e => {
       e.preventDefault(); const title = new FormData(e.target).get('title').trim();
       if (!title) return;
@@ -115,7 +141,7 @@ function renderTab(c) {
     $('#download-notes').addEventListener('click', () => download(`# ${c.title}\n\n${courseRecord(state,c.id).notes}`, `${c.id}-复习笔记.md`, 'text/markdown'));
   } else {
     const resources = [...c.resources, ...r.resources];
-    target.innerHTML = `<h2>让资料归到一处</h2><p class="muted">收集课件、教材、习题与参考链接，复习时少找一步。</p>${resources.map(x => `<div class="resource"><span class="resource-icon" aria-hidden="true">↗</span><a href="${escape(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${escape(x.title)}<small>${escape(x.url)}</small></a>${r.resources.some(y => y.id === x.id) ? `<button class="delete-button" data-delete-resource="${escape(x.id)}" aria-label="删除${escape(x.title)}">删除</button>` : ''}</div>`).join('') || '<div class="empty"><h3>这里等待你的第一份资料</h3><p>目前仅导入了选课信息，尚未添加课件或教材。<br>可添加 GitHub 文件、在线文档或其他资料的链接。</p></div>'}<form id="resource-form" class="resource-form"><h3>添加资料链接</h3><label>资料名称<input name="title" required maxlength="150" placeholder="例如：第 1 章课件"></label><label>链接地址<input name="url" type="url" required maxlength="2048" placeholder="https://…"></label><p class="form-error" id="resource-error" role="alert"></p><button class="button primary" type="submit">添加资料 ＋</button></form>`;
+    target.innerHTML = `<h2>让资料归到一处</h2>${getReview(c.id) ? renderSources(getReview(c.id)) : ''}<p class="muted">收集课件、教材、习题与参考链接，复习时少找一步。</p>${resources.map(x => `<div class="resource"><span class="resource-icon" aria-hidden="true">↗</span><a href="${escape(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${escape(x.title)}<small>${escape(x.url)}</small></a>${r.resources.some(y => y.id === x.id) ? `<button class="delete-button" data-delete-resource="${escape(x.id)}" aria-label="删除${escape(x.title)}">删除</button>` : ''}</div>`).join('') || (getReview(c.id) ? '<p class="muted">以上为已提供的原始资料；完整整理内容在“复习讲义”中。你也可以继续添加参考链接。</p>' : '<div class="empty"><h3>这里等待你的第一份资料</h3><p>目前仅导入了选课信息，尚未添加课件或教材。<br>可添加 GitHub 文件、在线文档或其他资料的链接。</p></div>')}<form id="resource-form" class="resource-form"><h3>添加资料链接</h3><label>资料名称<input name="title" required maxlength="150" placeholder="例如：第 1 章课件"></label><label>链接地址<input name="url" type="url" required maxlength="2048" placeholder="https://…"></label><p class="form-error" id="resource-error" role="alert"></p><button class="button primary" type="submit">添加资料 ＋</button></form>`;
     $('#resource-form').addEventListener('submit', e => {
       e.preventDefault(); const data = new FormData(e.target), url = safeUrl(data.get('url')), title = data.get('title').trim();
       if (!url || !title) { $('#resource-error').textContent = '请输入名称和有效的 http / https 链接。'; return; }
@@ -130,7 +156,7 @@ function route() {
   if (location.hash.startsWith('#course/')) {
     const c = match && getCourse(match[1]);
     if (!c) { current = null; $('#breadcrumb-current').textContent = '课程未找到'; $('#main').innerHTML = '<div class="empty"><h1>没有找到这门课程</h1><p>课程可能只保存在其他浏览器中，请导入学习备份后再试。</p><a class="button primary" href="#">返回课程总览</a></div>'; updateSidebar(); return; }
-    activeTab = 'outline'; state.recent = c.id; save(); renderDetail(c);
+    activeTab = getReview(c.id) ? 'review' : 'outline'; state.recent = c.id; save(); renderDetail(c);
   } else renderHome();
   window.scrollTo(0, 0);
 }
@@ -173,8 +199,8 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => {
   if (!e.target.matches('[role="tab"]') || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-  e.preventDefault(); const tabs = ['outline','notes','resources'], i = tabs.indexOf(activeTab);
-  activeTab = e.key === 'Home' ? tabs[0] : e.key === 'End' ? tabs[2] : tabs[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3];
+  e.preventDefault(); const tabs = courseTabs(current).map(([key]) => key), i = tabs.indexOf(activeTab);
+  activeTab = e.key === 'Home' ? tabs[0] : e.key === 'End' ? tabs[2] : tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
   renderDetail(getCourse(current)); $(`[data-tab="${activeTab}"]`).focus();
 });
 
